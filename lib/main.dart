@@ -11,6 +11,19 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
+// ============================================================
+// 🎯 TARGET WINNERS MAP FOR EACH PRIZE AMOUNT
+// - PRIZE AMOUNT : 'EMPLOYEE_CODE'
+// - Yadi Employee Code halnubhayo bhane: Tyo manche le jitchha.
+// - Yadi khali ('') chhodnubhayo bhane: RANDOM le jitchha.
+// ============================================================
+final Map<double, String> TARGET_WINNERS = {
+  100.0: '', // Khali ('') = Pure Random
+  200.0: '', // Khali ('') = Pure Random
+  500.0: '', // Khali ('') = Pure Random
+  1000.0: '', // Code rakhiyeko = Tyo specific manche le jitchha
+};
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -925,7 +938,24 @@ class _FullScreenDrawPageState extends State<FullScreenDrawPage> {
       animationTimer?.cancel();
       animationTimer = null;
 
-      final selected = candidates[random.nextInt(candidates.length)];
+      // ----------------------------------------------------
+      // 🎯 DYNAMIC TARGET MATCHING LOGIC
+      // ----------------------------------------------------
+      Employee selected;
+      final targetCode = (TARGET_WINNERS[prizeAmount] ?? '').trim();
+
+      if (targetCode.isNotEmpty) {
+        final fixedCandidateIndex = candidates.indexWhere(
+            (e) => e.empCode.trim().toLowerCase() == targetCode.toLowerCase());
+
+        if (fixedCandidateIndex != -1) {
+          selected = candidates[fixedCandidateIndex];
+        } else {
+          selected = candidates[random.nextInt(candidates.length)];
+        }
+      } else {
+        selected = candidates[random.nextInt(candidates.length)];
+      }
 
       try {
         await EmployeeStore.instance.saveWinner(
@@ -965,7 +995,7 @@ class _FullScreenDrawPageState extends State<FullScreenDrawPage> {
     }
   }
 
-  // FULL SCREEN CONGRATULATIONS DIALOG (THULO NAME, THULO PRIZE, BORDER REMOVED FROM DETAILS, CONTINUE AT LAST)
+  // FULL SCREEN CONGRATULATIONS DIALOG
   Future<void> showCongratulations(
     Employee person,
     double prizeAmount,
